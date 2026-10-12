@@ -1,0 +1,37 @@
+name: Daily Google Stock Summary
+
+on:
+  schedule:
+    # Runs at 9:00 AM UTC every weekday (Mon-Fri)
+    - cron: "0 9 * * 1-5"
+  workflow_dispatch: # allow manual runs
+
+permissions:
+  contents: write
+
+jobs:
+  stock-summary:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run stock agent
+        run: python stock_agent.py
+
+      - name: Commit and push summary
+        run: |
+          git config user.name "Stock Agent Bot"
+          git config user.email "stock-agent@github-actions"
+          git add summaries/
+          git diff --cached --quiet || git commit -m "chore: daily GOOGL summary $(date +'%Y-%m-%d')"
+          git push
